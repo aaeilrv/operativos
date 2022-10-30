@@ -3,198 +3,32 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "Node.h"
-#include "Lista.h"
-#include "Tupla.h"
+#include "Array.h"
+#include "Triplet.h"
 
+void BinarySearch(Array *a, char* key, char* type);
+void LinearSearch(Array *a, char* key, char* type);
 
-/*
-* Retorno: Pointer a nueva lista enlazada
-* con una cabeza no nula de largo 0.
-*/
-Lista* CrearLista() {
-    Lista *lista = malloc(sizeof(struct Lista));
-    Node *cabeza = malloc(sizeof(struct Node));
-
-    if (!lista) {
-        return NULL;
-    }
-    if (!cabeza) {
-        return NULL;
-    }
-
-    lista->head = cabeza;
-    lista->head->value = 0;
-
-    return lista;
+/** ARREGLO DINAMICO **/
+void initArray(Array *array, int initSize) {
+    array->size = initSize;
+    array->used = 0;
+    array->data = malloc(10 * sizeof(Triplet));
 }
 
-/*
-* Dado un string alfanumérico, la función
-* devuelve el último valor numérico que consigue.
-* Entrada: String que contiene el campo
-* "clave" de la tupla.
-* Salida: Entero
-*/
-int becomeNumber(char *value) {
-    int key;
-    char *str = value, *p = str;
-
-    while (*p) {
-        if ( isdigit(*p) || ( (*p=='-'||*p=='+') && isdigit(*(p+1)) )) {
-            key = strtol(p, &p, 10);
-        } else {
-            p++;
-        }
+void insertArray(Array *array, struct Triplet* value) {
+    if (array->size == array->used) {
+        array->size += array->size;
+        array->data = realloc(array->data, array->size * sizeof(Triplet));
     }
-
-    return key;
+    array->data[array->used++] = *value;
 }
 
-/*
-* Entrada: Pointer a tupla que estará contenida en el nodo.
-* Retorno: Pointer a nodo que contiene la tupla de entrada,
-* largo del tamaño de la primera cadena de caracteres
-* de la tupla y con Pointeres nulos hacia el previo y
-* siguiente nodo.
-*/
-Node* CrearNodo(struct Tupla* info) {
-    Node *newNode = malloc(sizeof(struct Node));
-    int key = becomeNumber(info->clave);
-
-    if (!newNode) {
-        return NULL;
-    }
-
-    newNode->data = info;
-    newNode->data->clave = info->clave;
-    newNode->data->nombre = info->nombre;
-    newNode->data->edad = info->edad;
-
-    newNode->value = key;
-
-	newNode->prev = NULL;
-	newNode->next = NULL;
-
-    return newNode;
+void freeArray(Array *array) {
+    free(array->data);
 }
 
-/*
-* Entrada: Pointer a lista enlazada y a nodo a insertar en la misma.
-* Los nodos son agregados utilizando ordenamiento lineal
-* ascendente dependiendo del elemento "value" de cada uno.
-*/
-void InsertarNodo(struct Node* newNode, struct Lista* lista) {    
-
-    if (lista->head->value == 0 || newNode->value <= lista->head->value) {
-        lista->head->prev = newNode;
-	    newNode->next = lista->head; 
-	    lista->head = newNode;
-    } else {
-        if (newNode->value > lista->head->value) {
-            struct Node *temp = lista->head;
-
-            while (temp->next != NULL && temp->next->value <= newNode->value) {
-                temp = temp->next;
-            }
-
-            newNode->next = temp->next;
-            newNode->prev = temp;
-            if (temp->next != NULL) {
-                temp->next->prev = newNode;
-            }
-            temp->next = newNode;
-        }
-    }
-}
-
-/*
-* Entrada: Apuntador a cadena de caracteres que
-* representa el nombre del archivo a ser abierto.
-* Retorno: Entero con la cantidad de "\n" que existen
-* en el archivo abierto.
-*/
-int NumColon(const char *filename) {
-    FILE *fp = fopen(filename, "r");
-    int count = 1;
-    int colon;
-
-    if (!fp) {
-        printf("El archivo no puede ser abierto.\n");
-        return -1;
-    }
-
-    while ((colon = getc(fp)) != EOF) {
-        if (colon == '\n') {
-            count++;
-        }
-    }
-
-    fclose(fp);
-
-    return count;
-}
-
-/*
-* Entrada: cadena de caracteres con el nombre del
-* archivo a ser abierto.
-* Retorno: Pointer a cadena de caracteres en la que
-* está contenida el texto original del archivo
-*/
-char* ArchivoAString(char filename[]) {
-    FILE *fp = fopen(filename, "r");
-
-    char *buffer = 0;
-    long length;
-
-    if (!fp) {
-        printf("El archivo no puede ser abierto.\n");
-        exit(1);
-    } else {
-        /* Se ve la cantidad de caracteres
-        * del archivo a través de*/
-        fseek(fp, 0, SEEK_END);
-        length = ftell(fp);
-        fseek(fp, 0, SEEK_SET);
-
-        /* Retonar un string vacio en
-        * caso que el archivo esté vacío. */
-        if (length == 0) {
-            buffer = "";
-            return buffer;
-        }
-
-        buffer = malloc(length);
-
-        if (!buffer) {
-            return NULL;
-        }
-
-        fread(buffer, 1, length, fp);
-
-        fclose(fp);
-    }
-    return buffer;
-}
-
-/*
-* Entrada: Pointer a dos cadenas de caracteres.
-* Retorno: Pointer a nueva tupla.
-*/
-Tupla* nueva_tupla(char *key, char *name, char *age) {
-    Tupla *newTuple = malloc(sizeof(struct Tupla));
-    if (!newTuple) {
-        return NULL;
-    }
-
-    newTuple->clave = key;
-    newTuple->nombre = name;
-    newTuple->edad = age;
-
-    return newTuple;
-}
-
-
+/** MANEJO DE REGISTROS **/
 char* cutLine(char *file, int i, int n) {
     char *str = malloc((n + 1) * sizeof(char));
 
@@ -208,82 +42,111 @@ char* cutLine(char *file, int i, int n) {
     return str;
 }
 
-/*
-* Dado un archivo con tres campos, (clave, nombre, edad)
-* la función traversa todas las
-* líneas del archivo, crea tuplas con los datos
-* encontrados y las agrega a una lista enlazada.
-*
-* Entrada: Cadena de caracteres que representa el
-* nombre del archivo a ser abierto; apuntador a lista
-* enlazada
+/**
+ * Entrada: Apuntadores a cadenas de caracteres.
+ * Salida: tripleta con los datos de entrada.
 */
-void CrearTuplas(char filename[], struct Lista* lista) {
-    char *fp = ArchivoAString(filename);
-    int count = NumColon(filename);
+Triplet* createTriplet(char* key, char* name, char* age) {
+    Triplet* newTriplet = malloc(sizeof(Triplet)); 
 
-    int i = 0;
+    newTriplet->key = key;
+    newTriplet->name = name;
+    newTriplet->age = age;
 
-    char* linea = strtok(fp, "\n");
+    return newTriplet;
+}
 
-    Tupla *tuple;
-    Node *nodo;
+/**
+ * Lee las líneas de un archivo. Dependiendo del tipo
+ * indicado, la función crea una tripleta con los datos
+ * que posteriormente agrega a un arreglo dinámico o
+ * llama a la función "Search".
+*/
+void createRecords(char filename[], int data, struct Array* a, char* type) {
+    FILE *fp;
+    char linea[29];
 
-    /* En caso de tener un archivo vacio,
-    * se crea un nodo sin valores ("", "", ""),
-    * como nodo único de la lista. */
-    if (count == 0) {
-        tuple = nueva_tupla("", "", "");
-        nodo = CrearNodo(tuple);
-        InsertarNodo(nodo, lista);
-        return;
-    }
+    fp = fopen(filename, "r");
 
-    while(i != count) {
-        char* key = cutLine(linea, 0, 6);
-        char* name = cutLine(linea, 6, 20);
-        char* age = cutLine(linea, 26, 2);
+    while(fgets(linea, sizeof(linea) + 1, fp)) {
 
-        tuple = nueva_tupla(key, name, age);
-        nodo = CrearNodo(tuple);
-        InsertarNodo(nodo, lista);
+        if (data == 0) {
+            char* key = cutLine(linea, 0, 6);
+            char* name = cutLine(linea, 6, 20);
+            char* age = cutLine(linea, 26, 2);
 
-        linea = strtok(NULL, "\n");
+            Triplet* three = createTriplet(key, name, age);
 
-        i++;
+            insertArray(a, three);
+            
+        } else if (data == 1) {
+            char* key = cutLine(linea, 0, 6);
+            printf("key: %s\n", key);
+            BinarySearch(a, key, type);
+            LinearSearch(a, key, type);
+        }
     }
 }
 
-/*
-* Entrada: Pointer a lista enlazada
-*/
-void ImprimirLista(struct Lista* lista) {
-	Node *temp = lista->head;
+/** ALGORITMOS DE BÚSQUEDA **/
+void BinarySearch(Array *a, char* key, char* type) {
+    int i = 0;
+    int j = a->used - 1;
+    int m = (i + j) / 2;
 
-	do {
-		printf("<%s,%s,%s>\n",
-            temp->data->clave,
-            temp->data->nombre,
-            temp->data->edad);
-		temp = temp->next;
-	}while(temp->next != NULL);
+    if (strcmp(type, "a") == 0) {
+        while (i <= j) {
+            if (strcmp(a->data[m].key, key) < 0) {
+                i = m + 1;
+            } else if (strcmp(a->data[m].key, key) == 0) {
+                printf("Nombre: %s\n", a->data[m].name);
+                printf("Edad: %s\n", a->data[m].age);
+                break;
+            } else {
+                j = m - 1;
+            }
+            m = (i + j) / 2;
+        }
+        if (i > j) {
+            printf("No se encontró el registro.\n");
+        }
+    } else if (strcmp(type, "n") == 0) {
 
-    /*while(temp->next != NULL) {
-        printf("<%s,%s,%s>\n",
-            temp->data->clave,
-            temp->data->nombre,
-            temp->data->edad);
-		temp = temp->next;
-    }*/
+    }
+}
 
-	printf("\n");
+void LinearSearch(Array *a, char* key, char* type) {
+    int i = 0;
+    int found = 0;
+
+    if (strcmp(type, "a") == 0) {
+        while (i < a->used && !found) {
+            if (strcmp(a->data[i].key, key) == 0) {
+                printf("Nombre: %s\n", a->data[i].name);
+                printf("Edad: %s\n", a->data[i].age);
+                found = 1;
+            }
+            i++;
+        }
+        if (!found) {
+            printf("No se encontró el registro.\n");
+        }
+    } else if (strcmp(type, "n") == 0) {
+
+    }
 }
 
 int main(int argc, char **argv) {
-    Lista *lista = CrearLista();
+    Array a;
+    char* type = argv[1];
 
-    CrearTuplas(argv[1], lista);
-    ImprimirLista(lista);
+    initArray(&a, 10);
+    createRecords(argv[2], 0, &a, type);
+
+    printf("%s\n", a.data[0].key);
+    printf("%d\n", a.used);
+    
+    createRecords(argv[3], 1, &a, type);
 
     return 0;
 }
