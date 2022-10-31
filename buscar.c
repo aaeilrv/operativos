@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "Array.h"
 #include "Tuple.h"
@@ -17,11 +18,14 @@ int compareN(const void *a, const void *b);
 int compareA(const void *a, const void *b);
 void organizePairs(Array *b, char* type);
 
-void SearchAlg(char* key, char* type, Array *a, Array *b);
-void BinarySearch(Array* a, Array *b, char* key, char* type);
-void LinearSearch(Array *a, char* key, char* type);
+void SearchAlg(char* key, char* type, Array *a, Array *b, FILE* fp_binary, FILE* fp_linear);
+void BinarySearch(Array* a, Array *b, char* key, char* type, FILE* fp);
+void LinearSearch(Array *a, char* key, char* type, FILE* fp);
 
-/** ARREGLO DINAMICO DE TupleAS **/
+void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type, double time, int found, FILE* fp);
+void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i, double time, int found, FILE* fp);
+
+/** ARREGLO DINAMICO **/
 void initArray(Array *array, int initSize) {
     array->size = initSize;
     array->used = 0;
@@ -59,7 +63,7 @@ Tuple* createTuple(char* key, char* second, int first, char* type) {
 
     if (strcmp(type, "a") == 0) {
         newTuple->keyA = key;
-        newTuple->keyN = -1;
+        newTuple->keyN = 2147483647;
         newTuple->second = second;
         newTuple->first = first;
     } else if (strcmp(type, "n") == 0) {
@@ -126,8 +130,13 @@ void createRecords(char filename[], struct Array* a, struct Array* b, char* type
 */
 void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
     FILE *fp;
+    FILE *fp_binary;
+    FILE *fp_linear;
+
     char linea[6];
     fp = fopen(filename, "r");
+    fp_binary = fopen("salidaIndice.txt", "w");
+    fp_linear = fopen("salidaSecuencial.txt", "w");
 
     if (fp == NULL) {
         printf("Error al abrir el archivo");
@@ -136,8 +145,11 @@ void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
 
     while(fgets(linea, sizeof(linea) + 1, fp)) {
         char* key = cutLine(linea, 0, 6);
-        SearchAlg(key, type, a, b);
+        printf("yo\n");
+        SearchAlg(key, type, a, b, fp_binary, fp_linear);
     }
+
+    fclose(fp);
 }
 
 /** ORDENAMIENTO ACORDE A LA CLAVE**/
@@ -181,39 +193,16 @@ void organizePairs(Array *b, char* type) {
     }
 }
 
-/* IMPRESION*/
-void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type) {
-    if (strcmp(type, "a") == 0) {
-        printf("binary: %s: (%s, %s, %d)\n", keyA, a->data[position].keyA, a->data[position].second, a->data[position].first);
-    } else if (strcmp(type, "n") == 0) {
-        printf("binary: %d: (%d, %s, %d)\n", keyN, a->data[position].keyN, a->data[position].second, a->data[position].first);
-    } else if (strcmp(type, "c") == 0) {
-        printf("binary: %s, %d: (No existe)\n", keyA, keyN);
-    }
-}
-
-void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i) {
-    if (strcmp(type, "a") == 0) {
-        printf("linear: %s: (%s, %s, %d)\n", keyA, a->data[i].keyA, a->data[i].second, a->data[i].first);
-    } else if (strcmp(type, "n") == 0) {
-        printf("linear: %d: (%d, %s, %d)\n", keyN, a->data[i].keyN, a->data[i].second, a->data[i].first);
-        
-    } else if (strcmp(type, "c") == 0) {
-        printf("linear: %s, %d: (No existe)\n", keyA, keyN);
-    }
-}
-
 /** ALGORITMOS DE BÚSQUEDA **/
-void SearchAlg(char* key, char* type, Array *a, Array *b) {
+void SearchAlg(char* key, char* type, Array *a, Array *b, FILE *fp_binary, FILE *fp_linear) {
 
     int i = 0;
     while (i < b->size) {
         i++;
     }
 
-    LinearSearch(a, key, type);
-    BinarySearch(a, b, key, type);
-    printf("\n");
+    BinarySearch(a, b, key, type, fp_binary);
+    LinearSearch(a, key, type, fp_linear);
 }
 
 /**
@@ -223,38 +212,37 @@ void SearchAlg(char* key, char* type, Array *a, Array *b) {
  * sus posiciones en el array de datos; clave
  * a buscar y tipo de clave.
 */
-void BinarySearch(Array* a, Array* b, char* key, char* type) {
+void BinarySearch(Array* a, Array* b, char* key, char* type, FILE *fp) {
     int i = 0;
     int j = b->used - 1;
     int m = 0;
     int found = 0;
 
+    clock_t t;
+    double time_taken;
+    t = clock();
+
     while (i <= j && !found) {
         m = (i + j) / 2;
+        if ((strcmp(type, "a") == 0 && strcmp(b->data[m].keyA, key) == 0) ||
+            (strcmp(type, "n") == 0 && b->data[m].keyN == atoi(key))) {
+            found = 1;
 
-        if (strcmp(type, "a") == 0) {
-            if (strcmp(b->data[m].keyA, key) == 0) {
-                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type);
-                found = 1;
-            } else if (strcmp(b->data[m].keyA, key) < 0) {
-                i = m + 1;
-            } else {
-                j = m - 1;
-            }
-        } else if (strcmp(type, "n") == 0) {
-            if (b->data[m].keyN == atoi(key)) {
-                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type);
-                found = 1;
-            } else if (b->data[m].keyN < atoi(key)) {
-                i = m + 1;
-            } else {
-                j = m - 1;
-            }
+            t = clock() - t;
+            time_taken = ((double)t)/CLOCKS_PER_SEC; 
+            BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type, time_taken, found, fp);
+        } else if (((strcmp(type, "a") == 0 && strcmp(b->data[m].keyA, key) < 0) ||
+            (strcmp(type, "n") == 0 && b->data[m].keyN < atoi(key)))) {
+            i = m + 1;
+        } else {
+            j = m - 1;
         }
     }
 
     if (!found) {
-        BinaryPrint(a, key, atoi(key), b->data[m].first, "c");
+        t = clock() - t;
+        time_taken = ((double)t)/CLOCKS_PER_SEC; 
+        BinaryPrint(a, key, atoi(key), b->data[m].first, "0", time_taken, found, fp);
     }
 }
 
@@ -264,35 +252,77 @@ void BinarySearch(Array* a, Array* b, char* key, char* type) {
  * de buscar el valor pedido es de acuerdo a la clave.
  * Entrada: array de strings, clave buscada, tipo de clave.
 */
-void LinearSearch(Array *a, char* key, char* type) {
+void LinearSearch(Array *a, char* key, char* type, FILE *fp) {
     int i = 0;
     int found = 0;
 
-    if (strcmp(type, "a") == 0) {
-        while (i < a->used && !found) {
-            if (strcmp(a->data[i].keyA, key) == 0) {
-                LinearPrint(a, a->data[i].keyA, i, type, i);
-                found = 1;
-            }
-            i++;
+    clock_t t;
+    double time_taken;
+    t = clock();
+
+    while (i < a->used && !found) {
+        if ((strcmp(type, "a") == 0 && strcmp(a->data[i].keyA, key) == 0) ||
+            (strcmp(type, "n") == 0 && a->data[i].keyN == atoi(key))) {
+            found = 1;
+            t = clock() - t;
+            time_taken = ((double)t)/CLOCKS_PER_SEC;
+            LinearPrint(a, a->data[i].keyA, a->data[i].keyN, type, i, time_taken, found, fp);
         }
-        if (!found) {
-            printf("Linear: No se encontró el registro.\n");
-        }
-    } else if (strcmp(type, "n") == 0) {
-        while (i < a->used && !found) {
-            if (a->data[i].keyN == atoi(key)) {
-                LinearPrint(a, a->data[i].keyA, a->data[i].keyN, type, i);
-                found = 1;
-            }
-            i++;
-        }
-        if (!found) {
-            LinearPrint(a, key, atoi(key), "c", 0);
-        }
+        i++;
+    }
+
+    if (!found) {
+        t = clock() - t;
+        time_taken = ((double)t)/CLOCKS_PER_SEC; 
+        LinearPrint(a, key, atoi(key), "c", i, time_taken, found, fp);
     }
 }
 
+/** IMPRESION **/
+void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type, double time, int found, FILE* fp) {
+    double ms = time * 1000;
+    fp = fopen("salidaIndice.txt", "a+");
+
+    if (found) {
+        if (strcmp(type, "a") == 0) {
+            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[position].keyA, a->data[position].second, a->data[position].first, ms);
+        } else if (strcmp(type, "n") == 0) {
+            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[position].keyN, a->data[position].second, a->data[position].first, ms);
+        }
+    } else if (!found) {
+        if (strcmp(type, "a") == 0) {
+            fprintf(fp, "%s: (No existe) %gms\n", keyA, ms);
+        } else if (strcmp(type, "n") == 0) {
+            fprintf(fp, "%d: (No existe) %gms\n", keyN, ms);
+        }
+    }
+
+    fclose(fp);
+}
+
+void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i, double time, int found, FILE *fp) {
+    double ms = time * 1000;
+    fp = fopen("salidaSecuencial.txt", "a+");
+
+    if (found) {
+        if (strcmp(type, "a") == 0) {
+            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[i].keyA, a->data[i].second, a->data[i].first, ms);
+        } else if (strcmp(type, "n") == 0) {
+            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[i].keyN, a->data[i].second, a->data[i].first, ms);
+            
+        }  
+    } else if (!found) {
+        if (strcmp(type, "a") == 0) {
+            fprintf(fp, "%s: (No existe) %gms\n", keyA, ms);
+        } else if (strcmp(type, "n") == 0) {
+            fprintf(fp, "%d: (No existe) %gms\n", keyN, ms);
+        }
+    }
+
+    fclose(fp);
+}
+
+/** MAIN **/
 int main(int argc, char **argv) {
     Array a;
     Array b;
