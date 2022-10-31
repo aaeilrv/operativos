@@ -7,6 +7,6 @@
 typedef struct Array {
     int size;
     int used;
-    struct Triplet* data;
+    struct Tuple* data;
 }
 Array;

@@ -2,57 +2,36 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ArrayT.h"
-#include "ArrayP.h"
-#include "Pair.h"
-#include "Triplet.h"
+#include "Array.h"
+#include "Tuple.h"
 
-void initArray_T(ArrayT *array, int initSize);
-void insertArray_T(ArrayT *array, struct Triplet* value);
-
-void initArray_P(ArrayP *array, int initSize);
-void insertArray_P(ArrayP *array, struct Pair* value);
+void initArray(Array *array, int initSize);
+void insertArray(Array *array, struct Tuple* value);
 
 char* cutLine(char *file, int i, int n);
-Triplet* createTriplet(char* key, char* name, char* age, char* type);
-Pair* createPair(char* key, int position, char* type);
-void createRecords(char filename[], struct ArrayT* a, struct ArrayP* b, char* type);
-void searchKeys(char filename[], struct ArrayT* a, struct ArrayP* b, char* type);
+Tuple* createTuple(char* key, char* second, int first, char* type);
+void createRecords(char filename[], struct Array* a, struct Array* b, char* type);
+void searchKeys(char filename[], struct Array* a, struct Array* b, char* type);
 
 int compareN(const void *a, const void *b);
 int compareA(const void *a, const void *b);
-void organizePairs(ArrayP *b, char* type);
+void organizePairs(Array *b, char* type);
 
-void SearchAlg(char* key, char* type, ArrayT *a, ArrayP *b);
-void BinarySearch(ArrayT* a, ArrayP *b, char* key, char* type);
-void LinearSearch(ArrayT *a, char* key, char* type);
+void SearchAlg(char* key, char* type, Array *a, Array *b);
+void BinarySearch(Array* a, Array *b, char* key, char* type);
+void LinearSearch(Array *a, char* key, char* type);
 
-/** ARREGLO DINAMICO DE TRIPLETAS **/
-void initArray_T(ArrayT *array, int initSize) {
+/** ARREGLO DINAMICO DE TupleAS **/
+void initArray(Array *array, int initSize) {
     array->size = initSize;
     array->used = 0;
-    array->data = malloc(10 * sizeof(Triplet));
+    array->data = malloc(10 * sizeof(Tuple));
 }
 
-void insertArray_T(ArrayT *array, struct Triplet* value) {
+void insertArray(Array *array, struct Tuple* value) {
     if (array->size == array->used) {
         array->size += array->size;
-        array->data = realloc(array->data, array->size * sizeof(Triplet));
-    }
-    array->data[array->used++] = *value;
-}
-
-/* ARREGLO DINAMICO DE PARES */
-void initArray_P(ArrayP *array, int initSize) {
-    array->size = initSize;
-    array->used = 0;
-    array->data = malloc(initSize * sizeof(Triplet));
-}
-
-void insertArray_P(ArrayP *array, struct Pair* value) {
-    if (array->size == array->used) {
-        array->size += array->size;
-        array->data = realloc(array->data, array->size * sizeof(Pair));
+        array->data = realloc(array->data, array->size * sizeof(Tuple));
     }
     array->data[array->used++] = *value;
 }
@@ -73,55 +52,39 @@ char* cutLine(char *file, int i, int n) {
 
 /**
  * Entrada: Apuntadores a cadenas de caracteres.
- * Salida: tripleta con los datos de entrada.
+ * Salida: Tuplea con los datos de entrada.
 */
-Triplet* createTriplet(char* key, char* name, char* age, char* type) {
-    Triplet* newTriplet = malloc(sizeof(Triplet)); 
+Tuple* createTuple(char* key, char* second, int first, char* type) {
+    Tuple* newTuple = malloc(sizeof(Tuple)); 
 
     if (strcmp(type, "a") == 0) {
-        newTriplet->keyA = key;
-        newTriplet->keyN = -1;
-        newTriplet->name = name;
-        newTriplet->age = atoi(age);
+        newTuple->keyA = key;
+        newTuple->keyN = -1;
+        newTuple->second = second;
+        newTuple->first = first;
     } else if (strcmp(type, "n") == 0) {
 
-        newTriplet->keyN = atoi(key);
-        newTriplet->keyA = "";
-        newTriplet->name = name;
-        newTriplet->age = atoi(age);
+        newTuple->keyN = atoi(key);
+        newTuple->keyA = "";
+        newTuple->second = second;
+        newTuple->first = first;
     }
 
-    return newTriplet;
-}
-
-Pair* createPair(char* key, int position, char* type) {
-    Pair* newPair = malloc(sizeof(Pair)); 
-
-    if (strcmp(type, "a") == 0) {
-        newPair->keyA = key;
-        newPair->keyN = 0;
-        newPair->position = position;
-    } else if (strcmp(type, "n") == 0) {
-        newPair->keyN = atoi(key);
-        newPair->keyA = "";
-        newPair->position = position;
-    }
-
-    return newPair;
+    return newTuple;
 }
 
 /**
  * Lee las líneas de un archivo, las divide y las
  * agrega en un arreglo dinámico. A su vez agrega
  * en un array dinámico los pares con las claves y
- * sus posiciones en el array de tripletas.
+ * sus posiciones en el array de Tupleas.
  * Entrada:
  *      filename: nombre del archivo a leer. 
- *      a: array dinámico donde se agregan las tripletas
+ *      a: array dinámico donde se agregan las Tupleas
  *      b: array dinámico donde se agregan los pares
  *      type: tipo de clave a usar (numérica o alfanumérica)
 */
-void createRecords(char filename[], struct ArrayT* a, struct ArrayP* b, char* type) {
+void createRecords(char filename[], struct Array* a, struct Array* b, char* type) {
     FILE *fp;
     char linea[29];
     int i = 0;
@@ -135,14 +98,14 @@ void createRecords(char filename[], struct ArrayT* a, struct ArrayP* b, char* ty
 
     while(fgets(linea, sizeof(linea) + 1, fp)) {
         char* key = cutLine(linea, 0, 6);
-        char* name = cutLine(linea, 6, 20);
-        char* age = cutLine(linea, 26, 2);
+        char* second = cutLine(linea, 6, 20);
+        char* first = cutLine(linea, 26, 2);
 
-        Triplet* three = createTriplet(key, name, age, type);
-        Pair* two = createPair(key, i, type);
+        Tuple* three = createTuple(key, second, atoi(first), type);
+        Tuple* two = createTuple(key, "", i, type);
 
-        insertArray_T(a, three);
-        insertArray_P(b, two);
+        insertArray(a, three);
+        insertArray(b, two);
 
         i++;
     }
@@ -152,7 +115,16 @@ void createRecords(char filename[], struct ArrayT* a, struct ArrayP* b, char* ty
     fclose(fp);
 }
 
-void searchKeys(char filename[], struct ArrayT* a, struct ArrayP* b, char* type) {
+/**
+ * Lee las claves a buscar a partir de dividir
+ *  las líneas de un archivo, luego llama a los
+ * algoritmos de búsqueda.
+ * Entrada: archivo donde se encuentran las claves,
+ * dos arreglos de tuplas (uno con los datos y otro
+ * con las claves y las posiciones -utilizado para
+ * la búsqueda lineal-) y el tipo de clave.
+*/
+void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
     FILE *fp;
     char linea[6];
     fp = fopen(filename, "r");
@@ -169,51 +141,70 @@ void searchKeys(char filename[], struct ArrayT* a, struct ArrayP* b, char* type)
 }
 
 /** ORDENAMIENTO ACORDE A LA CLAVE**/
+/**
+ * Función de comparación para qsort en
+ * el caso de clave numérica.
+ * Entrada: Dos apuntadores a void.
+ * Salida: Entero que indica si el primer
+ * elemento es menor, igual o mayor-
+*/
 int compareN(const void *a, const void *b) {
-    Pair *ia = (Pair *)a;
-    Pair *ib = (Pair *)b;
+    Tuple *ia = (Tuple *)a;
+    Tuple *ib = (Tuple *)b;
 
     return ia->keyN - ib->keyN;
 }
 
+/**
+ * Función de comparación para qsort en
+ * el caso de clave alfanumérica.
+ * Entrada: Dos apuntadores a void.
+ * Salida: Entero que indica si el primer
+ * elemento es menor, igual o mayor-
+*/
 int compareA(const void *a, const void *b) {
-    Pair *ia = (Pair *)a;
-    Pair *ib = (Pair *)b;
+    Tuple *ia = (Tuple *)a;
+    Tuple *ib = (Tuple *)b;
 
     return strcmp(ia->keyA, ib->keyA);
 }
 
-void organizePairs(ArrayP *b, char* type) {
+/**
+ * Ordena el array de tuplas acorde a la clave.
+ * Entrada: Array de tuplas, tipo de clave.
+*/
+void organizePairs(Array *b, char* type) {
     if (strcmp(type, "a") == 0) {
-        qsort(b->data, b->used, sizeof(Pair), compareA);
+        qsort(b->data, b->used, sizeof(Tuple), compareA);
     } else if (strcmp(type, "n") == 0) {
-        qsort(b->data, b->used, sizeof(Pair), compareN);
+        qsort(b->data, b->used, sizeof(Tuple), compareN);
     }
 }
 
 /* IMPRESION*/
-void BinaryPrint(ArrayT* a, char* keyA, int keyN, int position, char* type) {
+void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type) {
     if (strcmp(type, "a") == 0) {
-        printf("binary: %s: (%s, %s, %d)\n", keyA, a->data[position].keyA, a->data[position].name, a->data[position].age);
+        printf("binary: %s: (%s, %s, %d)\n", keyA, a->data[position].keyA, a->data[position].second, a->data[position].first);
     } else if (strcmp(type, "n") == 0) {
-        printf("binary: %d: (%d, %s, %d)\n", keyN, a->data[position].keyN, a->data[position].name, a->data[position].age);
+        printf("binary: %d: (%d, %s, %d)\n", keyN, a->data[position].keyN, a->data[position].second, a->data[position].first);
     } else if (strcmp(type, "c") == 0) {
         printf("binary: %s, %d: (No existe)\n", keyA, keyN);
     }
 }
 
-void LinearPrint(ArrayT* a, char* keyA, int keyN, char* type, int i) {
+void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i) {
     if (strcmp(type, "a") == 0) {
-        printf("linear: %s: (%s, %s, %d)\n", keyA, a->data[i].keyA, a->data[i].name, a->data[i].age);
+        printf("linear: %s: (%s, %s, %d)\n", keyA, a->data[i].keyA, a->data[i].second, a->data[i].first);
     } else if (strcmp(type, "n") == 0) {
-        printf("linear: %d: (%d, %s, %d)\n", keyN, a->data[i].keyN, a->data[i].name, a->data[i].age);
+        printf("linear: %d: (%d, %s, %d)\n", keyN, a->data[i].keyN, a->data[i].second, a->data[i].first);
         
     } else if (strcmp(type, "c") == 0) {
         printf("linear: %s, %d: (No existe)\n", keyA, keyN);
     }
 }
+
 /** ALGORITMOS DE BÚSQUEDA **/
-void SearchAlg(char* key, char* type, ArrayT *a, ArrayP *b) {
+void SearchAlg(char* key, char* type, Array *a, Array *b) {
 
     int i = 0;
     while (i < b->size) {
@@ -225,7 +216,14 @@ void SearchAlg(char* key, char* type, ArrayT *a, ArrayP *b) {
     printf("\n");
 }
 
-void BinarySearch(ArrayT* a, ArrayP* b, char* key, char* type) {
+/**
+ * Algoritmo de búsqueda binaria.
+ * Entrada: Dos array de tuplas, uno donde
+ * están los datos y otro con las claves y
+ * sus posiciones en el array de datos; clave
+ * a buscar y tipo de clave.
+*/
+void BinarySearch(Array* a, Array* b, char* key, char* type) {
     int i = 0;
     int j = b->used - 1;
     int m = 0;
@@ -236,7 +234,7 @@ void BinarySearch(ArrayT* a, ArrayP* b, char* key, char* type) {
 
         if (strcmp(type, "a") == 0) {
             if (strcmp(b->data[m].keyA, key) == 0) {
-                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].position, type);
+                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type);
                 found = 1;
             } else if (strcmp(b->data[m].keyA, key) < 0) {
                 i = m + 1;
@@ -245,7 +243,7 @@ void BinarySearch(ArrayT* a, ArrayP* b, char* key, char* type) {
             }
         } else if (strcmp(type, "n") == 0) {
             if (b->data[m].keyN == atoi(key)) {
-                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].position, type);
+                BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type);
                 found = 1;
             } else if (b->data[m].keyN < atoi(key)) {
                 i = m + 1;
@@ -256,11 +254,17 @@ void BinarySearch(ArrayT* a, ArrayP* b, char* key, char* type) {
     }
 
     if (!found) {
-        BinaryPrint(a, key, atoi(key), b->data[m].position, "c");
+        BinaryPrint(a, key, atoi(key), b->data[m].first, "c");
     }
 }
 
-void LinearSearch(ArrayT *a, char* key, char* type) {
+/**
+ * Algoritmo de implementación de búsqueda lineal.
+ * Este lo hace en el arreglo de strings y su forma
+ * de buscar el valor pedido es de acuerdo a la clave.
+ * Entrada: array de strings, clave buscada, tipo de clave.
+*/
+void LinearSearch(Array *a, char* key, char* type) {
     int i = 0;
     int found = 0;
 
@@ -289,14 +293,13 @@ void LinearSearch(ArrayT *a, char* key, char* type) {
     }
 }
 
-
 int main(int argc, char **argv) {
-    ArrayT a;
-    ArrayP b;
+    Array a;
+    Array b;
     char* type = argv[1];
 
-    initArray_T(&a, 5);
-    initArray_P(&b, 5);
+    initArray(&a, 5);
+    initArray(&b, 5);
 
     createRecords(argv[2], &a, &b, type); 
     searchKeys(argv[3], &a, &b, type);
