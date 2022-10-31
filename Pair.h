@@ -4,10 +4,9 @@
 * 16-11233
 */
 
-typedef struct Triplet {
-    int keyN;
+typedef struct Pair {
+    int position;
     char *keyA;
-    char *name;
-    int age;
+    int keyN;
 }
-Triplet;
+Pair;

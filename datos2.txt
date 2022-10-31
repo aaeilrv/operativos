@@ -1,4 +1,5 @@
-     1 Pedro Perez 25
-    12 Luiz Mendoza Alcanta44
-   234 María Ana Perdomo 24
-121212 Mariano de la Santos77
+    69Maria Ana Perdomo   24
+     8Pedro Perez         25
+     1Mariano de la Santos77
+     5Luiz Mendoza Alcanta44
+    32Luis Mendoza Alcanta44
