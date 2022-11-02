@@ -8,9 +8,10 @@
 
 void initArray(Array *array, int initSize);
 void insertArray(Array *array, struct Tuple* value);
+void freeArray(Array *aray);
 
 char* cutLine(char *file, int i, int n);
-Tuple* createTuple(char* key, char* second, int first, char* type);
+Tuple* createTuple(char* key, char* name, int number, char* type);
 void createRecords(char filename[], struct Array* a, struct Array* b, char* type);
 void searchKeys(char filename[], struct Array* a, struct Array* b, char* type);
 
@@ -26,25 +27,82 @@ void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type, doubl
 void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i, double time, int found, FILE* fp);
 
 /** ARREGLO DINAMICO **/
+
+/**
+ * Inicializa un arreglo dinámico.
+ * 
+ * Entrada:
+ *  - array: Apuntador al arreglo dinámico a inicializar.
+ *  - initSize: Tamaño inicial del arreglo.
+*/
 void initArray(Array *array, int initSize) {
     array->size = initSize;
     array->used = 0;
     array->data = malloc(10 * sizeof(Tuple));
+
+    if (!array->data) {
+        printf("Error: No se pudo reservar memoria para el arreglo dinamico.");
+        exit(1);
+    }
 }
 
-void insertArray(Array *array, struct Tuple* value) {
+/**
+ * Inserta un elemento al arreglo dinamico y
+ * reserva más memoria en caso de que este esté
+ * lleno.
+ * 
+ * Entrada:
+ * - array: arreglo dinamico.
+ * - value: elemento a insertar.
+ */
+void insertArray(Array* array, struct Tuple* value) {
     if (array->size == array->used) {
         array->size += array->size;
         array->data = realloc(array->data, array->size * sizeof(Tuple));
+
+        if (!array->data) {
+            printf("Error: No se pudo reservar más memoria para el arreglo dinamico.");
+            exit(1);
+        }
     }
     array->data[array->used++] = *value;
 }
 
-/** MANEJO DE REGISTROS **/
-char* cutLine(char *file, int i, int n) {
-    char *str = malloc((n + 1) * sizeof(char));
+/**
+ * Libera espacio de memoria reservado para
+ * el arreglo dinámico.
+ * 
+ * Entrada: 
+ * - array: Apuntador al arreglo dinámico.
+ */
+void freeArray(Array* array) {
+    free(array->data);
+    array->data = NULL;
+    array->used = array->size = 0;
+}
 
-    strncpy(str, &file[i], n);    
+/** MANEJO DE REGISTROS **/
+/**
+ * Corta una sección de un string con ayuda de strncpy.
+ * 
+ * Entrada:
+ * - line: cadena de caracteres a ser cortada.
+ * - i: posición de la cadena desde donde se
+ *      cortará.
+ * - n: cantidad de caracteres a cortar.
+ * 
+ * Salida:
+ *      Apuntador a cadena de caracteres.
+ */ 
+char* cutLine(char* line, int i, int n) {
+    char* str = malloc((n + 1) * sizeof(char));
+
+    if (!str) {
+        printf("Error: No se pudo reservar memoria para el arreglo.");
+        exit(1);
+    }
+
+    strncpy(str, &line[i], n);    
     str[n] = 0;
 
     if (!str) {
@@ -55,23 +113,41 @@ char* cutLine(char *file, int i, int n) {
 }
 
 /**
- * Entrada: Apuntadores a cadenas de caracteres.
- * Salida: Tuplea con los datos de entrada.
+ * Crea las tuplas que se insertarán en los
+ * arreglos dinámicos.
+ * 
+ * Entrada:
+ * - key: clave de la tupla
+ * - name: nombre de la tupla en caso de poseerla
+ * - number: valor numérico de la tupla, puede ser
+ *          tanto el dato de edad como la posición.
+ * - type: tipo de clave que se está manejando
+ * 
+ * Salida: Apuntador a tupla con los datos de entrada.
 */
-Tuple* createTuple(char* key, char* second, int first, char* type) {
+Tuple* createTuple(char* key, char* name, int number, char* type) {
     Tuple* newTuple = malloc(sizeof(Tuple)); 
 
+    if (!newTuple) {
+        printf("Error: No se pudo reservar memoria para la tupla");
+        exit(1);
+    }
+
+    /* Define cómo guardar la tupla de acuerdo
+    al tipo de clave. En caso alfanumérico, el
+    valor de la clave keyN es el mayor acercamiento
+    al valor infinito en C. */
     if (strcmp(type, "a") == 0) {
         newTuple->keyA = key;
         newTuple->keyN = 2147483647;
-        newTuple->second = second;
-        newTuple->first = first;
+        newTuple->name = name;
+        newTuple->number = number;
     } else if (strcmp(type, "n") == 0) {
 
         newTuple->keyN = atoi(key);
         newTuple->keyA = "";
-        newTuple->second = second;
-        newTuple->first = first;
+        newTuple->name = name;
+        newTuple->number = number;
     }
 
     return newTuple;
@@ -80,13 +156,15 @@ Tuple* createTuple(char* key, char* second, int first, char* type) {
 /**
  * Lee las líneas de un archivo, las divide y las
  * agrega en un arreglo dinámico. A su vez agrega
- * en un array dinámico los pares con las claves y
- * sus posiciones en el array de Tupleas.
+ * en otro array dinámico de tuplas las claves y
+ * sus posiciones en el primer arreglo.
+ * 
  * Entrada:
- *      filename: nombre del archivo a leer. 
- *      a: array dinámico donde se agregan las Tupleas
- *      b: array dinámico donde se agregan los pares
- *      type: tipo de clave a usar (numérica o alfanumérica)
+ * - filename: nombre del archivo a leer. 
+ * - a: array dinámico donde se agregan los registros.
+ * - b: array dinámico donde se agregan las claves.
+ *      y sus posiciones.
+ * - type: tipo de clave a usar (numérica o alfanumérica).
 */
 void createRecords(char filename[], struct Array* a, struct Array* b, char* type) {
     FILE *fp;
@@ -102,10 +180,10 @@ void createRecords(char filename[], struct Array* a, struct Array* b, char* type
 
     while(fgets(linea, sizeof(linea) + 1, fp)) {
         char* key = cutLine(linea, 0, 6);
-        char* second = cutLine(linea, 6, 20);
-        char* first = cutLine(linea, 26, 2);
+        char* name = cutLine(linea, 6, 20);
+        char* number = cutLine(linea, 26, 2);
 
-        Tuple* three = createTuple(key, second, atoi(first), type);
+        Tuple* three = createTuple(key, name, atoi(number), type);
         Tuple* two = createTuple(key, "", i, type);
 
         insertArray(a, three);
@@ -121,12 +199,15 @@ void createRecords(char filename[], struct Array* a, struct Array* b, char* type
 
 /**
  * Lee las claves a buscar a partir de dividir
- *  las líneas de un archivo, luego llama a los
+ * las líneas de un archivo, luego llama a los
  * algoritmos de búsqueda.
- * Entrada: archivo donde se encuentran las claves,
- * dos arreglos de tuplas (uno con los datos y otro
- * con las claves y las posiciones -utilizado para
- * la búsqueda lineal-) y el tipo de clave.
+ * 
+ * Entrada: 
+ * - Filename: archivo donde se encuentran las claves.
+ * - a: array dinámico donde se encuentran los registros.
+ * - b: array dinámico donde se encuentran las claves y 
+ *      sus posiciones.
+ * - type: tipo de clave de los registros.
 */
 void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
     FILE *fp;
@@ -145,8 +226,9 @@ void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
 
     while(fgets(linea, sizeof(linea) + 1, fp)) {
         char* key = cutLine(linea, 0, 6);
-        printf("yo\n");
-        SearchAlg(key, type, a, b, fp_binary, fp_linear);
+        if (strcmp(key, "\n") > 0 || strcmp(key, "\n") < 0) {
+            SearchAlg(key, type, a, b, fp_binary, fp_linear);
+        }
     }
 
     fclose(fp);
@@ -154,11 +236,15 @@ void searchKeys(char filename[], struct Array* a, struct Array* b, char* type) {
 
 /** ORDENAMIENTO ACORDE A LA CLAVE**/
 /**
- * Función de comparación para qsort en
- * el caso de clave numérica.
- * Entrada: Dos apuntadores a void.
- * Salida: Entero que indica si el primer
- * elemento es menor, igual o mayor-
+ * Función de comparación para qsort en el caso de
+ * clave numérica.
+ * 
+ * Entrada:
+ *  - Dos apuntadores void que tomarán los valores
+ *    de las claves numéricas a comparar.
+ * 
+ * Salida: Entero que indica si la primera
+ *  clave es menor, igual o mayor a la segunda.
 */
 int compareN(const void *a, const void *b) {
     Tuple *ia = (Tuple *)a;
@@ -168,11 +254,16 @@ int compareN(const void *a, const void *b) {
 }
 
 /**
- * Función de comparación para qsort en
- * el caso de clave alfanumérica.
- * Entrada: Dos apuntadores a void.
- * Salida: Entero que indica si el primer
- * elemento es menor, igual o mayor-
+ * Función de comparación para qsort en el caso de
+ * clave alfanumérica.
+ * 
+ * Entrada:
+ * - Dos apuntadores void que tomarán los valores
+ *   de las claves alfanuméricas a comparar.
+ * 
+ * Salida: Entero que indica si la primera
+ *  clave es menor, igual o mayor a la
+ *  segunda.
 */
 int compareA(const void *a, const void *b) {
     Tuple *ia = (Tuple *)a;
@@ -182,24 +273,41 @@ int compareA(const void *a, const void *b) {
 }
 
 /**
- * Ordena el array de tuplas acorde a la clave.
- * Entrada: Array de tuplas, tipo de clave.
+ * Función que organiza el arreglo dinámico de claves
+ * y posiciones con ayuda de qsort de acuerdo al valor
+ * de las claves de c/u.
+ * 
+ * Entrada:
+ * - a: arreglo dinámico a organizar.
+ * - type: tipo de clave del arreglo a ordenar.
 */
-void organizePairs(Array *b, char* type) {
+void organizePairs(Array *a, char* type) {
     if (strcmp(type, "a") == 0) {
-        qsort(b->data, b->used, sizeof(Tuple), compareA);
+        qsort(a->data, a->used, sizeof(Tuple), compareA);
     } else if (strcmp(type, "n") == 0) {
-        qsort(b->data, b->used, sizeof(Tuple), compareN);
+        qsort(a->data, a->used, sizeof(Tuple), compareN);
     }
 }
 
 /** ALGORITMOS DE BÚSQUEDA **/
-void SearchAlg(char* key, char* type, Array *a, Array *b, FILE *fp_binary, FILE *fp_linear) {
-
-    int i = 0;
-    while (i < b->size) {
-        i++;
-    }
+/**
+ * Función que llama a los algoritmos de búsqueda.
+ * 
+ * Entrada:
+ * - key: clave a buscar.
+ * - type: tipo de clave a buscar.
+ * - a: arreglo dinámico donde se implementará la
+ *      búsqueda lineal y en el cual se hallarán las
+ *      posiciones del resultado de la búsqueda binaria.
+ * - b: arreglo dinámico donde se implementará la búsqueda
+ *      binaria.
+ * - fp_binary: archivo donde se escribirá el resultado de
+ *      la búsqueda binaria.
+ * - fp_linear: archivo donde se escribirá el resultado de
+ *      la búsqueda lineal.
+*/
+void SearchAlg(char* key, char* type, Array *a, Array *b,
+                FILE *fp_binary, FILE *fp_linear) {
 
     BinarySearch(a, b, key, type, fp_binary);
     LinearSearch(a, key, type, fp_linear);
@@ -207,10 +315,16 @@ void SearchAlg(char* key, char* type, Array *a, Array *b, FILE *fp_binary, FILE 
 
 /**
  * Algoritmo de búsqueda binaria.
- * Entrada: Dos array de tuplas, uno donde
- * están los datos y otro con las claves y
- * sus posiciones en el array de datos; clave
- * a buscar y tipo de clave.
+ * 
+ * Entrada: 
+ * - a: arreglo de valores donde se se verá el
+ *      resultado en caso de ser hallado.
+ * - b: arreglo de claves y sus posiciones en el
+ *      arreglo a.
+ * - key: clave a buscar.
+ * - type: tipo de clave a buscar.
+ * * fp: archivo donde se escribirá el resultado de
+ *      la búsqueda.
 */
 void BinarySearch(Array* a, Array* b, char* key, char* type, FILE *fp) {
     int i = 0;
@@ -230,7 +344,7 @@ void BinarySearch(Array* a, Array* b, char* key, char* type, FILE *fp) {
 
             t = clock() - t;
             time_taken = ((double)t)/CLOCKS_PER_SEC; 
-            BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].first, type, time_taken, found, fp);
+            BinaryPrint(a, b->data[m].keyA, b->data[m].keyN, b->data[m].number, type, time_taken, found, fp);
         } else if (((strcmp(type, "a") == 0 && strcmp(b->data[m].keyA, key) < 0) ||
             (strcmp(type, "n") == 0 && b->data[m].keyN < atoi(key)))) {
             i = m + 1;
@@ -242,15 +356,20 @@ void BinarySearch(Array* a, Array* b, char* key, char* type, FILE *fp) {
     if (!found) {
         t = clock() - t;
         time_taken = ((double)t)/CLOCKS_PER_SEC; 
-        BinaryPrint(a, key, atoi(key), b->data[m].first, "0", time_taken, found, fp);
+        BinaryPrint(a, key, atoi(key), b->data[m].number, type, time_taken, found, fp);
     }
 }
 
 /**
- * Algoritmo de implementación de búsqueda lineal.
- * Este lo hace en el arreglo de strings y su forma
- * de buscar el valor pedido es de acuerdo a la clave.
- * Entrada: array de strings, clave buscada, tipo de clave.
+ * Algoritmo de búsqueda lineal.
+ * 
+ * Entrada:
+ * - a: arreglo de valores donde se implementará
+ *      la búsqueda.
+ * - key: clave a buscar.
+ * - type: tipo de clave a buscar.
+ * - fp: archivo donde se escribirá el resultado
+ *      de la búsqueda.
 */
 void LinearSearch(Array *a, char* key, char* type, FILE *fp) {
     int i = 0;
@@ -274,20 +393,40 @@ void LinearSearch(Array *a, char* key, char* type, FILE *fp) {
     if (!found) {
         t = clock() - t;
         time_taken = ((double)t)/CLOCKS_PER_SEC; 
-        LinearPrint(a, key, atoi(key), "c", i, time_taken, found, fp);
+        LinearPrint(a, key, atoi(key), type, i, time_taken, found, fp);
     }
 }
 
 /** IMPRESION **/
-void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type, double time, int found, FILE* fp) {
+/**
+ * Función que imprime el resultado de la búsqueda binaria.
+ * 
+ * Entrada:
+ * - a: arreglo dinámico de valores.
+ * - keyA: clave alfanumérica a buscar en caso de ser claves
+ *     de tipo alfanumérica.
+ * - keyN: clave numérica a buscar en caso de ser claves de
+ *     tipo numérica.
+ * - position: posición en el arreglo a donde se encuentra
+ *     la clave buscada.
+ * - type: tipo de clave.
+ * - time: tiempo en segundos que tomó la búsqueda.
+ * - found: variable que indica si se encontró o no la clave
+ *     buscada.    
+ * - fp: archivo donde se escribirá el resultado de la búsqueda.
+*/
+void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type,
+                double time, int found, FILE* fp) {
     double ms = time * 1000;
     fp = fopen("salidaIndice.txt", "a+");
 
     if (found) {
         if (strcmp(type, "a") == 0) {
-            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[position].keyA, a->data[position].second, a->data[position].first, ms);
+            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[position].keyA,
+                    a->data[position].name, a->data[position].number, ms);
         } else if (strcmp(type, "n") == 0) {
-            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[position].keyN, a->data[position].second, a->data[position].first, ms);
+            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[position].keyN,
+                    a->data[position].name, a->data[position].number, ms);
         }
     } else if (!found) {
         if (strcmp(type, "a") == 0) {
@@ -300,15 +439,35 @@ void BinaryPrint(Array* a, char* keyA, int keyN, int position, char* type, doubl
     fclose(fp);
 }
 
-void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i, double time, int found, FILE *fp) {
+/**
+ * Función que imprime el resultado de la busqueda lineal.
+ * 
+ * Entrada:
+ * - a: array donde se implementó la búsqueda.
+ * - keyA: clave alfanumérica a buscar en caso de ser claves
+ *     de tipo alfanumérica.
+ * - keyN: clave numérica a buscar en caso  de ser claves de
+ *     tipo numérica.
+ * - type: tipo de clave.
+ * - position: posición en el arreglo a donde se encuentra la
+ *     clave buscada.
+ * - time: tiempo en segundos que tomó la búsqueda.
+ * - found: variable que indica si se encontró o no la clave
+ *     buscada.
+ * - fp: archivo donde se escribirá el resultado de la búsqueda.
+*/
+void LinearPrint(Array* a, char* keyA, int keyN, char* type, int i,
+                double time, int found, FILE *fp) {
     double ms = time * 1000;
     fp = fopen("salidaSecuencial.txt", "a+");
 
     if (found) {
         if (strcmp(type, "a") == 0) {
-            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[i].keyA, a->data[i].second, a->data[i].first, ms);
+            fprintf(fp, "%s: (%s, %s, %d) %gms\n", keyA, a->data[i].keyA,
+                    a->data[i].name, a->data[i].number, ms);
         } else if (strcmp(type, "n") == 0) {
-            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[i].keyN, a->data[i].second, a->data[i].first, ms);
+            fprintf(fp, "%d: (%d, %s, %d) %gms\n", keyN, a->data[i].keyN,
+                    a->data[i].name, a->data[i].number, ms);
             
         }  
     } else if (!found) {
@@ -333,6 +492,9 @@ int main(int argc, char **argv) {
 
     createRecords(argv[2], &a, &b, type); 
     searchKeys(argv[3], &a, &b, type);
+
+    freeArray(&a);
+    freeArray(&b);
 
     return 0;
 }

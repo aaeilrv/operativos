@@ -7,7 +7,7 @@
 typedef struct Tuple {
     int keyN;
     char *keyA;
-    char *second;
-    int first;
+    char *name;
+    int number;
 }
 Tuple;
