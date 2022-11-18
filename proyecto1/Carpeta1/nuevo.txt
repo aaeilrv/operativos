@@ -1,0 +1,9 @@
+Directorio: ./Carpeta1
+    Numero de archivos regulares: 2
+    Numero de directorios: 1
+    Directorio: ./Carpeta1/Carpeta11
+        Numero de archivos regulares: 2
+        Numero de directorios: 1
+
+Numero total de archivos regulares bajo ./Carpeta1: 4
+Numero total de directorios bajo ./Carpeta1: 2
