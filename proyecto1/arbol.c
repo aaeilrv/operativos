@@ -133,11 +133,12 @@ int is_symbolic_link(char* path) {
 }
 
 /**     RECORRIDO RECURSIVO     **/
-int recursiveVisit(char* dirname, char* indent, Array* array, int first) {
+int recursiveVisit(char* dirname, char* indent, Array* array) {
     DIR* dir = opendir(dirname);
     struct dirent* entry;
 
     Tuple* in_dir = createTuple();
+    int emptyDir = 1;
 
     if (!dir) return -1;
 
@@ -172,8 +173,7 @@ int recursiveVisit(char* dirname, char* indent, Array* array, int first) {
 
             if (is_directory(path)) {
                 in_dir->directories++;
-                insertArray(array, in_dir);
-                recursiveVisit(path, new_indent, array, 0);
+                recursiveVisit(path, new_indent, array);
 
             } else {
                 if (is_reg_file(path)) {
@@ -187,22 +187,24 @@ int recursiveVisit(char* dirname, char* indent, Array* array, int first) {
 
             free(path);
             free(new_indent);
+
+            emptyDir = -1;
         }
     }
     
     entry = readdir(dir);
 
-    if (first) {
+    if (emptyDir) { /* Crea par para los directorios vacíos */
         Pair* pair = createPair(dirname, indent);
         in_dir->pair = pair;
     }
-
-    /*insertArray(array, in_dir);*/ /* acomodar esto */
 
     if (closedir(dir) == -1) {
         printf("ERROR: No se pudo cerrar el directorio\n");
         return -1;
     }
+
+    insertArray(array, in_dir);
 
     return 0;
 }
@@ -360,7 +362,7 @@ int main(int argc, char** argv) {
 
     initArray(&dir_tree, LEN);
 
-    recursiveVisit(tree_beggining, "", &dir_tree, 1);
+    recursiveVisit(tree_beggining, "", &dir_tree);
 
     sort(&dir_tree);
 
