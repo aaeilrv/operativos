@@ -1,3 +1,5 @@
+#define _DEFAULT_SOURCE /* macro añadido para utilizar lstat*/
+
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>
@@ -96,6 +98,13 @@ void freeArray(Array* array) {
     array->used = array->size = 0;
 }
 
+int calc_size(char* filename) {
+    struct stat st;
+
+    lstat(filename, &st);
+    return st.st_size;
+}
+
 /**     TIPOS DE ARCHIVO    **/
 /*
 Entrada: apuntador a char: path
@@ -135,9 +144,11 @@ int is_symbolic_link(char* path) {
 /**     RECORRIDO RECURSIVO     **/
 int recursiveVisit(char* dirname, char* indent, Array* array) {
     DIR* dir = opendir(dirname);
+    
     struct dirent* entry;
 
     Tuple* in_dir = createTuple();
+
     int emptyDir = 1;
 
     if (!dir) return -1;
@@ -149,6 +160,8 @@ int recursiveVisit(char* dirname, char* indent, Array* array) {
         if (strcmp(d_name, ".") == 0 || strcmp(d_name, "..") == 0) {
             continue;
         } else {
+            int bytesPerDisk = 0;
+
             char* path = malloc(sizeof(char) *               
                 (strlen(dirname) + strlen(d_name) + 2));  /* Obtengo espacio para nuevo path */
             
@@ -173,17 +186,24 @@ int recursiveVisit(char* dirname, char* indent, Array* array) {
 
             if (is_directory(path)) {
                 in_dir->directories++;
-                recursiveVisit(path, new_indent, array);
+                bytesPerDisk += calc_size(path);
 
+                recursiveVisit(path, new_indent, array);
             } else {
                 if (is_reg_file(path)) {
                     in_dir->regular_files++;
+
+                    bytesPerDisk += calc_size(path);
                 } 
                 
                 if (is_symbolic_link(path)) {
                     in_dir->symbolic_links++;
+
+                    bytesPerDisk += calc_size(path);
                 }
             }
+
+            in_dir->bytes += bytesPerDisk;
 
             free(path);
             free(new_indent);
@@ -194,7 +214,7 @@ int recursiveVisit(char* dirname, char* indent, Array* array) {
     
     entry = readdir(dir);
 
-    if (emptyDir) { /* Crea par para los directorios vacíos */
+    if (emptyDir) { /* Crea Pair para los directorios vacíos */
         Pair* pair = createPair(dirname, indent);
         in_dir->pair = pair;
     }
@@ -245,31 +265,32 @@ void hierarchyTree(Array* values, FILE* fp) {
         fprintf(fp, "    %sNumero de directorios: %d\n",
                 values->data[i].pair->indent, values->data[i].directories);
 
-        /*fprintf(fp, "    %sNumero de Bytes en disco: TO DO\n",
-                values->data[i].pair->indent);*/
+        fprintf(fp, "    %sNumero de Bytes en disco: %d\n",
+                values->data[i].pair->indent, values->data[i].bytes);
 
         total_tree->regular_files += values->data[i].regular_files;
         total_tree->directories += values->data[i].directories;
+        total_tree->symbolic_links += values->data[i].symbolic_links;
+        total_tree->bytes += values->data[i].bytes;
 
         i++;
     }
     
-    /*fprintf(fp, "\n");
-    fprintf(fp, "Los siguientes conjuntos de archivos son
-            enlaces fuertes entre si: TO DO\n");*/
+    fprintf(fp, "\n");
+    fprintf(fp, "Los siguientes conjuntos de archivos son enlaces fuertes entre si: TO DO\n");
 
     fprintf(fp, "\n");
 
     fprintf(fp, "Numero total de archivos regulares bajo %s: %d\n",
             values->data[0].pair->dir_name, total_tree->regular_files);
 
-    /*fprintf(fp, "Numero total de enlaces simbolicos bajo %s: TO DO\n",
-            values->data[0].dir_name);*/
+    fprintf(fp, "Numero total de enlaces simbolicos bajo %s: TO DO\n",
+            values->data[0].pair->dir_name);
 
     fprintf(fp, "Numero total de directorios bajo %s: %d\n",
             values->data[0].pair->dir_name, total_tree->directories);
 
-    /*fprintf(fp, "Numero total de Bytes en disco: TO DO bytes\n");*/
+    fprintf(fp, "Numero total de Bytes en disco: %d\n", total_tree->bytes);
 }
 
 /**     OBTENCIÓN DE PARAMETROS     **/
