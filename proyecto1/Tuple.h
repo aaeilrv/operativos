@@ -6,9 +6,9 @@
 * Estructure "Tuple".
 */
 
-#define EJ 500
-
 typedef struct Tuple {
+    char* dir_name;
+    char* indent;
     int regular_files;
     int directories;
     int symbolic_links;

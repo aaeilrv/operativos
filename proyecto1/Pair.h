@@ -10,7 +10,8 @@
 #define MAX 500
 
 typedef struct Pair {
-    char dir_name[MAX];
-    char indent[MAX];
+    int inode_number;
+    struct ListaChar *dirnames;
+    /*char dirname[MAX];*/
 }
 Pair;
