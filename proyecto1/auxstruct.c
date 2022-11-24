@@ -1,7 +1,9 @@
 /**
  * Valeria Vera
  * 16-11233
- * Estructuras definidas
+ *
+ * Funciones para la creación de tuplas
+ * y la creación de pares.
 */
 
 #include <stdio.h>
@@ -15,10 +17,16 @@
 
 #define MAX 500
 
+/**
+ * Nos permite crear una tupla con todos
+ * sus elementos enteros inicializados en 0
+ * y espacio reservado para sus elementos de tipo
+ * char.
+*/
 Tuple* createTuple() {
     struct Tuple* tuple = malloc(sizeof(struct Tuple));
-    char* dirname = malloc(sizeof(char) * MAX);
-    char* indent = malloc(sizeof(char) * MAX);
+    char* dirname = malloc(sizeof(char) * MAX + 1);
+    char* indent = malloc(sizeof(char) * MAX + 1);
 
     if (!tuple) {
         printf("Error: No se pudo reservar memoria\n");
@@ -45,6 +53,16 @@ Tuple* createTuple() {
     return tuple;
 }
 
+/**
+ * Nos permite crear un par de un entero
+ * representando el número de inodo y una lista
+ * de caracteres representando los archivos que
+ * comparten ese inodo.
+ * 
+ * Entrada:
+ * - int inode: número de inodo
+ * - dirnames: lista de caracteres.
+*/
 Pair* createPair(int inode, ListaChar* dirnames) {
     struct Pair* pair = malloc(sizeof(struct Pair));
 

@@ -1,3 +1,12 @@
+/**
+ * Valeria Vera
+ * 16-11233
+ * Sistemas de Operación I
+ * 
+ * Funciones para la inicialización, inserción y liberación
+ * de memoria reservada para la estructura Array de tuplas.
+*/
+
 #include <stdio.h>
 #include <dirent.h>
 #include <string.h>

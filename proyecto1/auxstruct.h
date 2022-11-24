@@ -3,7 +3,8 @@
 * Valeria Vera Herrera
 * 16-11233
 *
-* EDITAR 
+* Funciones para la creación de tuplas
+* y la creación de pares.
 */
 
 #ifndef __AUXESTRUCT_H__
@@ -11,8 +12,7 @@
 
 #include <stdio.h>
 
-void initArray(Array *array, int initSize);
-void insertArray(Array* array, Tuple* value);
-void freeArray(Array* array);
+Tuple* createTuple();
+Pair* createPair(int inode, ListaChar* dirnames);
 
 #endif

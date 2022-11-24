@@ -1,17 +1,17 @@
 /**
-* CI3825: Sistemas de Operación
-* Valeria Vera Herrera
-* 16-11233
-*
-* Estructure "Pair". Es el tipo de estructura del cual
-* están hechos los arreglos dinámicos.
+ * Valeria Vera
+ * 16-11233
+ * Sistemas de Operación I
+ * 
+ * Pair: estructura contenida en l
+ * estructura lista, formada por un entero
+ * y una listaChar; representando cada uno
+ * el número de inodo y los nombres de los archivos
+ * en ese inodo respectivamente.
 */
-
-#define MAX 500
 
 typedef struct Pair {
     int inode_number;
     struct ListaChar *dirnames;
-    /*char dirname[MAX];*/
 }
 Pair;

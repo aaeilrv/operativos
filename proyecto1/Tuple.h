@@ -1,9 +1,15 @@
 /**
-* CI3825: Sistemas de Operación
-* Valeria Vera Herrera
-* 16-11233
-*
-* Estructure "Tuple".
+ * Valeria Vera
+ * 16-11233
+ * Sistemas de Operación I
+ * 
+ * Estructura Tuple, conformada por el nombre
+ * de un directorio, su indentación al momento
+ * de imprimir, su número de bytes y los tipos
+ * de archivo que tiene.
+ * 
+ * Se utiliza dentro de las estructuras de arreglos
+ * de tuplas.
 */
 
 typedef struct Tuple {
@@ -13,6 +19,5 @@ typedef struct Tuple {
     int directories;
     int symbolic_links;
     int bytes;
-    struct Pair* pair;
 }
 Tuple;

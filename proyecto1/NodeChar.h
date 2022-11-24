@@ -1,21 +1,21 @@
-/*
-* CI3825: Sistemas de Operación
-* Valeria Vera Herrera
-* 16-11233
+/**
+ * Valeria Vera
+ * 16-11233
+ * Sistemas de Operación I
 */
 
-/*
-* Estructura de Nodo la cual contiene una estructura Par,
-* un entero "length" que representa el largo de la primera
-* cadena de caracteres del par, y dos structuras Node para
-* el nodo previo y el siguiente de la lista enlazada.
+/**
+ * Estructura NodeChar, conformada por un apuntador a data, 
+ * un apuntador al siguiente nodo de la lista y al previo,
+ * y un entero que expresa si el inodo guardado en este nodo
+ * ya existe o no.
+ * 
+ * Se utiliza en la estructura de listas doblemente enlazadas
+ * de caracteres (listChar).
 */
-
-#define MAX 500
-
 typedef struct NodeChar  {
     char* data;
-    int length;
+    /*int length;*/
 	struct NodeChar* next;
 	struct NodeChar* prev;
 }
