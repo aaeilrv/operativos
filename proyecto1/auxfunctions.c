@@ -360,6 +360,8 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
 
     total_tree->bytes -= BytesHardLinks; /* Se restan los bytes de los hard links */
 
+    fprintf(fp, "\n");
+
     freeList(inodes_list);
 
     fprintf(fp, "Numero total de archivos regulares bajo %s: %d\n",

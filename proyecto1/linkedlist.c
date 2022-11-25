@@ -112,7 +112,6 @@ void printListaChar(ListaChar* lista, FILE* fp) {
             fprintf(fp, "    %s\n",temp->data);
             temp = temp->next;
         }while(temp->next != NULL);
-        fprintf(fp, "\n");
     }
 }
 
