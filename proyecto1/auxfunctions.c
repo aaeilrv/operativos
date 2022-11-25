@@ -3,7 +3,7 @@
  * 16-11233
  * Sistemas de Operación I
  * 
- * -------
+ * funciones auxiliaries para el proyecto I.
 */
 
 #define _DEFAULT_SOURCE /* macro añadido para utilizar lstat*/
@@ -85,9 +85,10 @@ int is_reg_file(char* path) {
 */
 int is_symbolic_link(char* path) {
     struct stat st;
-    if (stat(path, &st) != 0) return -1;
 
-    return S_ISLNK(st.st_mode);
+    if (lstat(path, &st) < 0) return -1;
+
+    return(S_ISLNK(st.st_mode));
 }
 
 /**
@@ -113,7 +114,7 @@ int calc_size(char* path) {
 */
 int inode_number(char* path) {
     struct stat st;  
-    if (stat(path, &st) != 0) return -1;
+    if (lstat(path, &st) != 0) return -1;
 
     return st.st_ino;
 }
@@ -139,7 +140,7 @@ int duplicated_inode(Lista* inodes_list, char* path) {
     int inodo = inode_number(path);
     Node* nodo_inodo = searchInode(inodo, inodes_list);
 
-    if (nodo_inodo == NULL) {
+    if (nodo_inodo == NULL) { /* Si no es un inodo repetido */
         ListaChar* lista = CrearListaChar();
         Pair* pair;
         Node* nodo;
@@ -169,7 +170,8 @@ int duplicated_inode(Lista* inodes_list, char* path) {
  *         directorios, subdirectorios y caracteristicas.
  * - inodes_list: lista de pares inodo-nombres de archivos.
 */
-int recursiveVisit(char* dirname, char* indent, Array* array, Lista* inodes_list) {
+int recursiveVisit(char* dirname, char* indent,
+            Array* array, Lista* inodes_list) {
     DIR* dir = opendir(dirname);
     struct dirent* entry;
 
@@ -214,8 +216,6 @@ int recursiveVisit(char* dirname, char* indent, Array* array, Lista* inodes_list
                 bytesPerDisk += calc_size(path);
                 recursiveVisit(path, new_indent, array, inodes_list);
             } else {
-                bytesPerDisk += duplicated_inode(inodes_list, path);
-
                 if (is_reg_file(path)) {
                     in_dir->regular_files++;
                 } 
@@ -223,6 +223,8 @@ int recursiveVisit(char* dirname, char* indent, Array* array, Lista* inodes_list
                 if (is_symbolic_link(path)) {
                     in_dir->symbolic_links++;
                 }
+
+                bytesPerDisk += duplicated_inode(inodes_list, path);
             }
 
             in_dir->bytes += bytesPerDisk;
@@ -263,13 +265,40 @@ void sort(Array* array) {
 
     for (i = 0; i < array->used; i++) {
         for (j = i + 1; j < array->used; j++) {
-            if (strcmp(array->data[i].dir_name, array->data[j].dir_name) > 0) {
+            if (strcmp(array->data[i].dir_name,
+                array->data[j].dir_name) > 0) {
                 temp = array->data[i];
                 array->data[i] = array->data[j];
                 array->data[j] = temp;
             }
         }
     }
+}
+
+/**
+ * Itera a través de una lista filenames que
+ * comparten nodo (enlaces fuertes) y retorna
+ * el total del tamaño en bytes de sus repeticiones.
+ * 
+ * Entrada:
+ *  - lista de caracteres que representa enlaces
+ *  fuertes entre sí.
+ * 
+ * Salida: entero con el total de bytes de un enlace
+ * fuerte.
+*/
+int SizeHardLinks(ListaChar* lista) {
+    NodeChar *temp = lista->head->next;
+    int i = 0;
+
+    if (temp != NULL) {
+        do {
+            i += calc_size(temp->data);
+            temp = temp->next;
+        }while(temp->next != NULL);
+    }
+
+    return i;
 }
 
 /**
@@ -289,6 +318,7 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
     char* root_tree = values->data[0].dir_name;
 
     int i = 0;
+    int BytesHardLinks = 0;
     
     while (i < values->used) {
         fprintf(fp, "%sDirectorio: %s\n", values->data[i].indent,
@@ -319,18 +349,18 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
     fprintf(fp, "\n");
     fprintf(fp, "Los siguientes conjuntos de archivos son enlaces fuertes entre si:\n");
 
-    do{
+    while(temp != NULL) {
         if (temp->duplicated == 1) {
             fprintf(fp, "Inodo: %d\n", temp->data->inode_number);
             printListaChar(temp->data->dirnames, fp);
+            BytesHardLinks += SizeHardLinks(temp->data->dirnames);
         }
         temp = temp->next;
-    } while (temp->next != NULL);
+    }
 
-    fprintf(fp, "\n");
+    total_tree->bytes -= BytesHardLinks; /* Se restan los bytes de los hard links */
 
-    /* Liberar memoria de nodos de ambas listas y listas*/
-    /* Liberar memoria de tupla y values */
+    freeList(inodes_list);
 
     fprintf(fp, "Numero total de archivos regulares bajo %s: %d\n",
             root_tree, total_tree->regular_files);
@@ -343,8 +373,8 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
 
     fprintf(fp, "Numero total de Bytes en disco: %d\n", total_tree->bytes);
 
-     /*free(total_tree->dir_name);
-    free(total_tree->indent);*/
+    free(total_tree->dir_name);
+    free(total_tree->indent);
 }
 
 /**
@@ -361,7 +391,7 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
  * puntero hacia el nombre del directorio raiz.
 */
 char* beggining(int argc, char** argv) {
-    char* tree_beggining = malloc(sizeof(char) * (INIT + 1) + 1);
+    char* tree_beggining = malloc(sizeof(char) * (INIT + 1));
     int found_d = 0;
     int i = 0;
 

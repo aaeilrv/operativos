@@ -25,8 +25,8 @@
 */
 Tuple* createTuple() {
     struct Tuple* tuple = malloc(sizeof(struct Tuple));
-    char* dirname = malloc(sizeof(char) * MAX + 1);
-    char* indent = malloc(sizeof(char) * MAX + 1);
+    char* dirname = malloc(sizeof(char) * (MAX + 1));
+    char* indent = malloc(sizeof(char) * (MAX + 1));
 
     if (!tuple) {
         printf("Error: No se pudo reservar memoria\n");

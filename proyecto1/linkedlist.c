@@ -55,7 +55,7 @@ ListaChar* CrearListaChar() {
 */
 NodeChar* CrearNodoChar(char* path) {
     NodeChar *newNode = malloc(sizeof(struct NodeChar));
-    char* nombreStr = malloc(sizeof(char) * strlen(path) + 1);
+    char* nombreStr = malloc(sizeof(char) * (strlen(path) + 1));
 
     if (!newNode) {
         printf("Error: No se pudo reservar memoria\n");
@@ -87,9 +87,13 @@ NodeChar* CrearNodoChar(char* path) {
  * - lista: lista en la que se insertará el nodo.
 */
 void InsertarNodoChar(NodeChar* newNode, ListaChar* lista) {
-    lista->head->prev = newNode;
-	newNode->next = lista->head;
-	lista->head = newNode;
+    if (lista->head->data == NULL) {
+        lista->head = newNode;
+    } else {
+        lista->head->prev = newNode;
+        newNode->next = lista->head; 
+        lista->head = newNode;
+    }
 }
 
 /**
@@ -108,8 +112,28 @@ void printListaChar(ListaChar* lista, FILE* fp) {
             fprintf(fp, "    %s\n",temp->data);
             temp = temp->next;
         }while(temp->next != NULL);
-        printf("\n");
+        fprintf(fp, "\n");
     }
+}
+
+/**
+ * Libera la memoria reservada para una
+ * lista de caracteres, comenzando por sus
+ * nodos y su contenido y luego la lista en sí.
+ * 
+ * Entrada: lista de caracteres a liberar.
+*/
+void freeCharList(ListaChar* list) {
+    NodeChar* aux = list->head;
+    NodeChar* aux2;
+
+    while (aux != NULL) {
+        aux2 = aux->next;
+        free(aux);
+        aux = aux2;
+    }
+
+    free(list);
 }
 
 /* Lista de pares */
@@ -171,9 +195,13 @@ Node* CrearNodo(Pair* info) {
  * - lista: lista en la que se insertará el nodo.
 */
 void InsertarNodo(Node* newNode, Lista* lista) {
-    lista->head->prev = newNode;
-	newNode->next = lista->head; 
-	lista->head = newNode;
+    if (lista->head->data == NULL) {
+        lista->head = newNode;
+    } else {
+        lista->head->prev = newNode;
+        newNode->next = lista->head; 
+        lista->head = newNode;
+    }
 }
 
 /**
@@ -191,4 +219,27 @@ void printList(Lista* lista, FILE* fp) {
         printListaChar(temp->data->dirnames, fp);
 		temp = temp->next;
 	}while(temp->next != NULL);
+}
+
+/**
+ * Libera la memoria reservada para una
+ * lista de pares, comenzando por sus
+ * nodos, el contenido de los mismos y luego
+ * la lista en sí.
+ * 
+ * Entrada: lista de pares a liberar.
+*/
+void freeList(Lista* list) {
+    Node* aux = list->head;
+    Node* aux2;
+
+    while (aux != NULL) {
+        aux2 = aux->next;
+        freeCharList(aux->data->dirnames);
+        free(aux->prev);
+        free(aux->data);
+        aux = aux2;
+    }
+
+    free(list);
 }

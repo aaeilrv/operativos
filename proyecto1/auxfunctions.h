@@ -20,6 +20,7 @@ int inode_number(char* path);
 int duplicated_inode(Lista* inodes_list, char* path);
 int recursiveVisit(char* dirname, char* indent, Array* array, Lista* inodes_list);
 void sort(Array* array);
+int SizeHardLinks(ListaChar* lista);
 void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list);
 char* beggining(int argc, char** argv);
 FILE* output(int argc, char** argv);

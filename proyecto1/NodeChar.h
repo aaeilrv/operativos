@@ -13,9 +13,8 @@
  * Se utiliza en la estructura de listas doblemente enlazadas
  * de caracteres (listChar).
 */
-typedef struct NodeChar  {
+typedef struct NodeChar {
     char* data;
-    /*int length;*/
 	struct NodeChar* next;
 	struct NodeChar* prev;
 }

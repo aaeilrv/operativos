@@ -17,10 +17,12 @@ ListaChar* CrearListaChar();
 NodeChar* CrearNodoChar(char* info);
 void InsertarNodoChar(NodeChar* newNode, ListaChar* lista);
 void printListaChar(ListaChar* lista, FILE* fp);
+void freeCharList(ListaChar* list);
 
 Lista* CrearLista();
 Node* CrearNodo(Pair* info);
 void InsertarNodo(Node* newNode, Lista* lista);
 void printList(Lista* lista, FILE* fp);
+void freeList(Lista* list);
 
 #endif
