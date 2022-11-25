@@ -1,2 +1,0 @@
-Elem12: (Elem12, El nombre del elem12, 20) 0.006ms
-Eleme1: (Eleme1, El nombre del elem 1, 67) 0.005ms
