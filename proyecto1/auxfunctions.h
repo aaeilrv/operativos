@@ -18,7 +18,7 @@ int is_symbolic_link(char* path);
 int calc_size(char* path);
 int inode_number(char* path);
 int duplicated_inode(Lista* inodes_list, char* path);
-int recursiveVisit(char* dirname, char* indent, Array* array, Lista* inodes_list);
+int recursiveVisit(char* dirname, int indent, Array* array, Lista* inodes_list);
 void sort(Array* array);
 int SizeHardLinks(ListaChar* lista);
 void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list);

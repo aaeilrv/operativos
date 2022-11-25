@@ -1,0 +1,69 @@
+   Directorio: ./../Prueba
+      Numero de archivos regulares: 0
+      Numero de archivos enlaces simbolicos: 0
+      Numero de directorios: 4
+      Numero de Bytes en disco: 16384
+      Directorio: ./../Prueba/Archivos de texto
+         Numero de archivos regulares: 5
+         Numero de archivos enlaces simbolicos: 2
+         Numero de directorios: 3
+         Numero de Bytes en disco: 12450
+         Directorio: ./../Prueba/Archivos de texto/Directorio1
+            Numero de archivos regulares: 3
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 7007
+         Directorio: ./../Prueba/Archivos de texto/Directorio2
+            Numero de archivos regulares: 2
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 138
+         Directorio: ./../Prueba/Archivos de texto/Directorio3
+            Numero de archivos regulares: 4
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 4335474
+      Directorio: ./../Prueba/Archivos de video
+         Numero de archivos regulares: 2
+         Numero de archivos enlaces simbolicos: 0
+         Numero de directorios: 1
+         Numero de Bytes en disco: 4688494
+         Directorio: ./../Prueba/Archivos de video/dirvideito
+            Numero de archivos regulares: 1
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 17839845
+      Directorio: ./../Prueba/Archivos random
+         Numero de archivos regulares: 2
+         Numero de archivos enlaces simbolicos: 0
+         Numero de directorios: 0
+         Numero de Bytes en disco: 1570158
+      Directorio: ./../Prueba/archivos pdf
+         Numero de archivos regulares: 0
+         Numero de archivos enlaces simbolicos: 0
+         Numero de directorios: 2
+         Numero de Bytes en disco: 8192
+         Directorio: ./../Prueba/archivos pdf/Directorio1
+            Numero de archivos regulares: 2
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 67236
+         Directorio: ./../Prueba/archivos pdf/Directorio2
+            Numero de archivos regulares: 1
+            Numero de archivos enlaces simbolicos: 0
+            Numero de directorios: 0
+            Numero de Bytes en disco: 3028
+
+Los siguientes conjuntos de archivos son enlaces fuertes entre si:
+Inodo: 1446666
+    ./../Prueba/Archivos de texto/Directorio3/HARDsuperenlace
+    ./../Prueba/Archivos de texto/Directorio3/superenlace
+    ./../Prueba/Archivos de texto/Directorio3/HARDsuperenlace2
+Inodo: 1446668
+    ./../Prueba/Archivos de texto/a
+    ./../Prueba/Archivos de texto/HardA
+
+Numero total de archivos regulares bajo ./../Prueba: 22
+Numero total de enlaces simbolicos bajo ./../Prueba: 2
+Numero total de directorios bajo ./../Prueba: 10
+Numero total de Bytes en disco: 24212798

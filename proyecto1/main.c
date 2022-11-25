@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     Array dir_tree;
     char* tree_beggining = beggining(argc, argv);
     FILE* output_file = output(argc, argv);
-    char* indent = "";
+    int indent = 0;
 
     initArray(&dir_tree, LEN);
 

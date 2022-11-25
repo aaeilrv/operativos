@@ -170,7 +170,7 @@ int duplicated_inode(Lista* inodes_list, char* path) {
  *         directorios, subdirectorios y caracteristicas.
  * - inodes_list: lista de pares inodo-nombres de archivos.
 */
-int recursiveVisit(char* dirname, char* indent,
+int recursiveVisit(char* dirname, int indent,
             Array* array, Lista* inodes_list) {
     DIR* dir = opendir(dirname);
     struct dirent* entry;
@@ -188,28 +188,21 @@ int recursiveVisit(char* dirname, char* indent,
             continue;
         } else {
             int bytesPerDisk = 0;
+            int new_indent = 1 + indent;
 
             char* path = malloc(sizeof(char) *               
                 (strlen(d_name) + strlen(dirname) + 4));
-            
-            char* new_indent = malloc(sizeof(char) *
-                ((strlen(indent) * 2) + 4));
 
             if (!path) {
                 printf("Error: No se pudo reservar memoria.\n");
                 exit(1);
             }
 
-            if (!new_indent) {
-                printf("Error: No se pudo reservar memoria.\n");
-                exit(1);
-            }
-
             sprintf(path, "%s/%s", dirname, d_name);
-            sprintf(new_indent, "%s    ", indent);
 
             strcpy(in_dir->dir_name, dirname);
-            strcpy(in_dir->indent, new_indent);
+
+            in_dir->indent = new_indent;
 
             if (is_directory(path)) {
                 in_dir->directories++;
@@ -230,7 +223,6 @@ int recursiveVisit(char* dirname, char* indent,
             in_dir->bytes += bytesPerDisk;
 
             free(path);
-            free(new_indent);
 
             emptyDir = -1;
         }
@@ -240,7 +232,7 @@ int recursiveVisit(char* dirname, char* indent,
 
     if (emptyDir) { /* Agrea nombre de directorio e indentacion de dir. vacio */
         strcpy(in_dir->dir_name, dirname);
-        strcpy(in_dir->indent, indent);
+        in_dir->indent = indent;
     }
 
     if (closedir(dir) == -1) {
@@ -318,24 +310,41 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
     char* root_tree = values->data[0].dir_name;
 
     int i = 0;
+    int indent = 0;
     int BytesHardLinks = 0;
     int TotalHardLinks = 0;
     
     while (i < values->used) {
-        fprintf(fp, "%sDirectorio: %s\n", values->data[i].indent,
-                values->data[i].dir_name);
+        char* indentChar = malloc(sizeof(char) * (values->data[i].indent) + 1);
 
-        fprintf(fp, "    %sNumero de archivos regulares: %d\n",
-                values->data[i].indent, values->data[i].regular_files);
+        if (!indentChar) {
+            printf("Error: No se pudo reservar memoria.\n");
+            exit(1);
+        }
 
-        fprintf(fp, "    %sNumero de archivos enlaces simbolicos: %d\n",
-                values->data[i].indent, values->data[i].symbolic_links);
+        strcpy(indentChar, "   ");
 
-        fprintf(fp, "    %sNumero de directorios: %d\n",
-                values->data[i].indent, values->data[i].directories);
+        while (indent < values->data[i].indent) {
+            strcat(indentChar, "   ");
+            indent++;
+        }
 
-        fprintf(fp, "    %sNumero de Bytes en disco: %d\n",
-                values->data[i].indent, values->data[i].bytes);
+        fprintf(fp, "%sDirectorio: %s\n",
+                indentChar, values->data[i].dir_name);
+
+        fprintf(fp, "   %sNumero de archivos regulares: %d\n",
+                indentChar, values->data[i].regular_files);
+
+        fprintf(fp, "   %sNumero de archivos enlaces simbolicos: %d\n",
+                indentChar, values->data[i].symbolic_links);
+
+        fprintf(fp, "   %sNumero de directorios: %d\n",
+                indentChar, values->data[i].directories);
+
+        fprintf(fp, "   %sNumero de Bytes en disco: %d\n",
+                indentChar, values->data[i].bytes);
+
+        free(indentChar);
 
         total_tree->regular_files += values->data[i].regular_files;
         total_tree->directories += values->data[i].directories;
@@ -343,6 +352,7 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
         total_tree->bytes += values->data[i].bytes;
 
         i++;
+        indent = 0;
     }
 
     freeArray(values);
@@ -386,7 +396,7 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
     fprintf(fp, "Numero total de Bytes en disco: %d\n", total_tree->bytes);
 
     free(total_tree->dir_name);
-    free(total_tree->indent);
+    /*free(total_tree->indent);*/
 }
 
 /**
@@ -412,22 +422,34 @@ char* beggining(int argc, char** argv) {
     } else {
         while (i < argc) {
             if (strcmp(argv[i], "-d") == 0) {
-                tree_beggining = realloc(tree_beggining,
-                    sizeof(char) * (strlen(argv[i + 1]) + 1));
-
-                if (!tree_beggining) {
-                    printf("Error: No se pudo reservar más memoria.\n");
+                if (i == argc - 1){ /* Si -d es el ultimo input*/
+                    printf("Error: No se especificó un directorio con -d.\n");
                     exit(1);
-                }   
+                } else {
+                    if (strcmp(argv[i + 1], "-f") == 0) { /* Si -d no posee valor siguiente */
+                        printf("Error: No se especificó un directorio con -d.\n");
+                        exit(1);
+                    } else { /* Si se utilizó -d y se especificó un directorio */
+                        tree_beggining = realloc(tree_beggining,
+                                sizeof(char) * (strlen(argv[i + 1]) + 1));
 
-                strcpy(tree_beggining, argv[i + 1]);
-                found_d = 1;
+                        if (!tree_beggining) {
+                            printf("Error: No se pudo reservar más memoria.\n");
+                            exit(1);
+                        }   
+
+                        strcpy(tree_beggining, argv[i + 1]);
+                        found_d = 1;
+
+                        return(tree_beggining);
+                    }
+                }
             }
             i++;
         }
     }
 
-    if (!found_d) {
+    if (!found_d) { /* Si no se ingresó el flag -d */
         tree_beggining = realloc(tree_beggining,
                 sizeof(char) * (strlen(".") + 1));
 
@@ -470,22 +492,32 @@ FILE* output(int argc, char** argv) {
     } else {    /* En caso de tener flags en la línea de comando */
         while (i < argc) {
             if (strcmp(argv[i], "-f") == 0) {
-                fp = fopen(argv[i + 1], "w+");
-
-                if (!fp) {
-                    printf("Error al crear el archivo %s\n", argv[i + 1]);
+                if (i == argc - 1){ /* Si -f es el ultimo input*/
+                    printf("Error: No se especificó un archivo con -f.\n");
                     exit(1);
+                } else {
+                    if (strcmp(argv[i + 1], "-d") == 0) { /* Si -f no posee valor siguiente */
+                        printf("Error: No se especificó un archivo con -f.\n");
+                        exit(1);
+                    } else { /* Si se utilizó -f y se especificó un archivo */
+                        fp = fopen(argv[i + 1], "w");
+
+                        if (!fp) {
+                            printf("Error al abrir el archivo de salida.\n");
+                            exit(1);
+                        }
+
+                        found_f = 1;
+
+                        return fp;
+                    }
                 }
-
-                found_f = 1;
-
-                return fp;
             }
             i++;
         }
     }
 
-    if (!found_f) { /* En caso de que -f no estè en */
+    if (!found_f) { /* En caso de que -f no esté en */
         fp = stdout;
 
         if (!fp) {
