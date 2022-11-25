@@ -190,10 +190,10 @@ int recursiveVisit(char* dirname, char* indent,
             int bytesPerDisk = 0;
 
             char* path = malloc(sizeof(char) *               
-                (strlen(dirname) + strlen(d_name) + 2));
+                (strlen(d_name) + strlen(dirname) + 4));
             
             char* new_indent = malloc(sizeof(char) *
-                (strlen(indent) + 4));
+                ((strlen(indent) * 2) + 4));
 
             if (!path) {
                 printf("Error: No se pudo reservar memoria.\n");
@@ -319,6 +319,7 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
 
     int i = 0;
     int BytesHardLinks = 0;
+    int TotalHardLinks = 0;
     
     while (i < values->used) {
         fprintf(fp, "%sDirectorio: %s\n", values->data[i].indent,
@@ -349,20 +350,29 @@ void hierarchyTree(Array* values, FILE* fp, Lista* inodes_list) {
     fprintf(fp, "\n");
     fprintf(fp, "Los siguientes conjuntos de archivos son enlaces fuertes entre si:\n");
 
-    while(temp != NULL) {
-        if (temp->duplicated == 1) {
-            fprintf(fp, "Inodo: %d\n", temp->data->inode_number);
-            printListaChar(temp->data->dirnames, fp);
-            BytesHardLinks += SizeHardLinks(temp->data->dirnames);
+    if (temp->data != NULL) { /* Cuando no es un dir. raiz vacio*/
+        while(temp != NULL) {
+            if (temp->duplicated == 1) {
+                fprintf(fp, "Inodo: %d\n", temp->data->inode_number);
+                printListaChar(temp->data->dirnames, fp);
+                BytesHardLinks += SizeHardLinks(temp->data->dirnames);
+                TotalHardLinks++;
+            }
+            temp = temp->next;
         }
-        temp = temp->next;
+        if (TotalHardLinks == 0) {
+            fprintf(fp, "No hay enlaces fuertes.\n");
+        } else {
+            total_tree->bytes -= BytesHardLinks; /* Se restan los bytes de los hard links */
+        }
+        freeList(inodes_list);
+    } else { /* Cuando la lista de inodos no tiene entradas*/
+        fprintf(fp, "No hay enlaces fuertes.\n");
+        free(inodes_list->head);
+        free(inodes_list);
     }
 
-    total_tree->bytes -= BytesHardLinks; /* Se restan los bytes de los hard links */
-
     fprintf(fp, "\n");
-
-    freeList(inodes_list);
 
     fprintf(fp, "Numero total de archivos regulares bajo %s: %d\n",
             root_tree, total_tree->regular_files);

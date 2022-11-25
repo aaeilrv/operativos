@@ -16,6 +16,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "Tuple.h"
 #include "Array.h"
@@ -37,10 +38,16 @@ int main(int argc, char** argv) {
     Array dir_tree;
     char* tree_beggining = beggining(argc, argv);
     FILE* output_file = output(argc, argv);
+    char* indent = "";
 
     initArray(&dir_tree, LEN);
 
-    recursiveVisit(tree_beggining, "", &dir_tree, inodes_list);
+    if (access(tree_beggining, F_OK) != 0) { /* Ver si directorio existe */
+        printf("El directorio ingresado no existe.\n");
+        exit(1);
+    }
+
+    recursiveVisit(tree_beggining, indent, &dir_tree, inodes_list);
 
     sort(&dir_tree);
 

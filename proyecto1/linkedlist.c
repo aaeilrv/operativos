@@ -70,8 +70,6 @@ NodeChar* CrearNodoChar(char* path) {
     strcpy(nombreStr, path);
 
     newNode->data = nombreStr;
-
-	newNode->prev = NULL;
 	newNode->next = NULL;
 
     return newNode;
@@ -90,7 +88,6 @@ void InsertarNodoChar(NodeChar* newNode, ListaChar* lista) {
     if (lista->head->data == NULL) {
         lista->head = newNode;
     } else {
-        lista->head->prev = newNode;
         newNode->next = lista->head; 
         lista->head = newNode;
     }
@@ -178,7 +175,6 @@ Node* CrearNodo(Pair* info) {
     newNode->data->inode_number = info->inode_number;
     newNode->data->dirnames = info->dirnames;
     newNode->duplicated = 0;
-	newNode->prev = NULL;
 	newNode->next = NULL;
 
     return newNode;
@@ -197,7 +193,6 @@ void InsertarNodo(Node* newNode, Lista* lista) {
     if (lista->head->data == NULL) {
         lista->head = newNode;
     } else {
-        lista->head->prev = newNode;
         newNode->next = lista->head; 
         lista->head = newNode;
     }
@@ -235,7 +230,6 @@ void freeList(Lista* list) {
     while (aux != NULL) {
         aux2 = aux->next;
         freeCharList(aux->data->dirnames);
-        free(aux->prev);
         free(aux->data);
         aux = aux2;
     }

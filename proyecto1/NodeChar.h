@@ -6,16 +6,15 @@
 
 /**
  * Estructura NodeChar, conformada por un apuntador a data, 
- * un apuntador al siguiente nodo de la lista y al previo,
- * y un entero que expresa si el inodo guardado en este nodo
+ * un apuntador al siguiente nodo de la lista y un entero
+ * que expresa si el inodo guardado en este nodo
  * ya existe o no.
  * 
- * Se utiliza en la estructura de listas doblemente enlazadas
- * de caracteres (listChar).
+ * Se utiliza en la estructura de listas enlazadas de caracteres
+ * (listChar).
 */
 typedef struct NodeChar {
     char* data;
 	struct NodeChar* next;
-	struct NodeChar* prev;
 }
 NodeChar;
